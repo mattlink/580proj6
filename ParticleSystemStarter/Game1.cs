@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
@@ -11,6 +12,16 @@ namespace ParticleSystemStarter
     {
         GraphicsDeviceManager graphics;
         SpriteBatch spriteBatch;
+
+        FireBall fireBall;
+        Rain rainSystem;
+
+        // Non-particle system based game objects
+
+        Rectangle floor;
+        Texture2D floorTexture;
+
+        Random random = new Random();
 
         public Game1()
         {
@@ -40,7 +51,19 @@ namespace ParticleSystemStarter
             // Create a new SpriteBatch, which can be used to draw textures.
             spriteBatch = new SpriteBatch(GraphicsDevice);
 
-            // TODO: use this.Content to load your game content here
+            int floorHeight = 50;
+            floor = new Rectangle(0, GraphicsDevice.Viewport.Height - floorHeight, GraphicsDevice.Viewport.Width, floorHeight);
+            floorTexture = Content.Load<Texture2D>("pixel");
+
+            Texture2D rainTexture = Content.Load<Texture2D>("particle");
+            rainSystem = new Rain(GraphicsDevice.Viewport.Width, GraphicsDevice, 1500, rainTexture);
+            rainSystem.SpawnPerFrame = 2;
+
+
+            Texture2D fireBallTexture = Content.Load<Texture2D>("particle");
+            fireBall = new FireBall(GraphicsDevice, 100, fireBallTexture);
+            fireBall.SpawnPerFrame = 4;
+            fireBall.Emitter = new Vector2(Mouse.GetState().X, Mouse.GetState().Y);
         }
 
         /// <summary>
@@ -62,7 +85,16 @@ namespace ParticleSystemStarter
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
 
-            // TODO: Add your update logic here
+
+            // if mouse click, convert fire ball state to fall then explode
+            if (Mouse.GetState().LeftButton == ButtonState.Pressed)
+            {
+                Console.WriteLine("Mouse Left Button Pressed:");
+                fireBall.Drop(floor.Y);
+            }
+
+            fireBall.Update(gameTime);
+            rainSystem.Update(gameTime);
 
             base.Update(gameTime);
         }
@@ -73,9 +105,13 @@ namespace ParticleSystemStarter
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.CornflowerBlue);
-
-            // TODO: Add your drawing code here
+            GraphicsDevice.Clear(Color.Black);
+            
+            rainSystem.Draw();
+            spriteBatch.Begin();
+            spriteBatch.Draw(floorTexture, floor, Color.Black);
+            spriteBatch.End();
+            fireBall.Draw();
 
             base.Draw(gameTime);
         }
